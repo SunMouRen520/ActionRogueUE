@@ -5,6 +5,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "SInteractionComponent.h"
 
 // Sets default values
 ASCharacter::ASCharacter()
@@ -21,6 +22,9 @@ ASCharacter::ASCharacter()
 
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	bUseControllerRotationYaw = false;
+
+	InteractionComp = CreateDefaultSubobject<USInteractionComponent>("InteractionComp");
+
 }
 
 // Called when the game starts or when spawned
@@ -52,6 +56,7 @@ void ASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 
 	PlayerInputComponent->BindAction("PrimaryAttack", IE_Pressed, this, &ASCharacter::PrimaryAttack);
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
+	PlayerInputComponent->BindAction("PrimaryInteract", IE_Pressed, this, &ASCharacter::PrimaryInteract);
 }
 
 void ASCharacter::MoveForward(float value)
@@ -79,9 +84,21 @@ void ASCharacter::MoveRight(float value)
 
 void ASCharacter::PrimaryAttack()
 {
+	PlayAnimMontage(AttackAnim);
 
+	GetWorldTimerManager().SetTimer(TimerHandle_PrimaryAttack, this, &ASCharacter::PrimaryAttack_TimeElasped, 0.2f);
+}
+
+void ASCharacter::PrimaryInteract()
+{
+	if (InteractionComp) {
+		InteractionComp->PrimaryInteract();
+	}
+}
+
+void ASCharacter::PrimaryAttack_TimeElasped()
+{
 	FVector HanldLocation = GetMesh()->GetSocketLocation("Muzzle_01");
-
 	FTransform SpawnTM = FTransform(GetControlRotation(), HanldLocation);
 
 	FActorSpawnParameters SpawnParams;
